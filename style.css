@@ -180,12 +180,11 @@ img {
 }
 
 .header-controls {
-  position: absolute;
-  top: 0;
-  right: 0;
   display: flex;
   gap: 4px;
   align-items: center;
+  justify-content: center;
+  margin-top: var(--space-xs);
 }
 
 .theme-btn {

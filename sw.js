@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sahasranama-v6';
+const CACHE_NAME = 'sahasranama-v7';
 const CORE_ASSETS = [
   './',
   './index.html',
