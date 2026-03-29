@@ -1427,7 +1427,7 @@ main {
   align-items: center;
   justify-content: space-between;
   padding: var(--space-sm) var(--space-md);
-  background: rgba(15, 15, 15, 0.92);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   margin-bottom: var(--space-md);
