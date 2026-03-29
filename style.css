@@ -2,7 +2,7 @@
    CSS Custom Properties
    ======================================== */
 
-/* Dark theme (default) */
+/* Dark theme (default) + shared tokens */
 :root {
   --bg: #0f0f0f;
   --surface: #1a1a1a;
@@ -15,6 +15,24 @@
   --success: #4a8c5c;
   --focus: #c9a84c;
   --danger: #8c4a4a;
+
+  --font-body: 'Haffer', 'Geist', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sanskrit: 'Tiro Devanagari Sanskrit', 'Noto Sans Devanagari', serif;
+  --font-sanskrit-body: 'Noto Sans Devanagari', 'Haffer', 'Geist', 'Inter', sans-serif;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  --space-xs: 6px;
+  --space-sm: 10px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 36px;
+  --space-2xl: 56px;
+
+  --transition: 180ms ease;
+}
 
 /* Light theme */
 html[data-theme="light"] {
@@ -46,24 +64,6 @@ html[data-theme="light"] {
     --focus: #9e7c2e;
     --danger: #8c4a4a;
   }
-}
-
-  --font-body: 'Haffer', 'Geist', 'Inter', system-ui, -apple-system, sans-serif;
-  --font-sanskrit: 'Tiro Devanagari Sanskrit', 'Noto Sans Devanagari', serif;
-  --font-sanskrit-body: 'Noto Sans Devanagari', 'Haffer', 'Geist', 'Inter', sans-serif;
-
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-
-  --space-xs: 6px;
-  --space-sm: 10px;
-  --space-md: 16px;
-  --space-lg: 24px;
-  --space-xl: 36px;
-  --space-2xl: 56px;
-
-  --transition: 180ms ease;
 }
 
 
