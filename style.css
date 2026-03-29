@@ -15,6 +15,7 @@
   --success: #4a8c5c;
   --focus: #c9a84c;
   --danger: #8c4a4a;
+  --gold-on-bg: #0f0f0f;
 
   --font-body: 'Haffer', 'Geist', 'Inter', system-ui, -apple-system, sans-serif;
   --font-sanskrit: 'Tiro Devanagari Sanskrit', 'Noto Sans Devanagari', serif;
@@ -39,14 +40,15 @@ html[data-theme="light"] {
   --bg: #f5f2ed;
   --surface: #ffffff;
   --surface-hover: #f0ebe3;
-  --gold: #9e7c2e;
+  --gold: #6b5315;
   --text-primary: #1a1a1a;
-  --text-secondary: #6b6560;
-  --sanskrit: #8b6914;
-  --border: #d9d3c7;
-  --success: #3a7a4a;
-  --focus: #9e7c2e;
+  --text-secondary: #5c5550;
+  --sanskrit: #6b5315;
+  --border: #cdc5b5;
+  --success: #2d6b3a;
+  --focus: #6b5315;
   --danger: #8c4a4a;
+  --gold-on-bg: #fff;
 }
 
 /* System preference: light */
@@ -55,14 +57,15 @@ html[data-theme="light"] {
     --bg: #f5f2ed;
     --surface: #ffffff;
     --surface-hover: #f0ebe3;
-    --gold: #9e7c2e;
+    --gold: #6b5315;
     --text-primary: #1a1a1a;
-    --text-secondary: #6b6560;
-    --sanskrit: #8b6914;
-    --border: #d9d3c7;
-    --success: #3a7a4a;
-    --focus: #9e7c2e;
+    --text-secondary: #5c5550;
+    --sanskrit: #6b5315;
+    --border: #cdc5b5;
+    --success: #2d6b3a;
+    --focus: #6b5315;
     --danger: #8c4a4a;
+    --gold-on-bg: #fff;
   }
 }
 
@@ -403,7 +406,7 @@ main {
 .sadhana-log-btn {
   padding: var(--space-xs) var(--space-lg);
   background: var(--gold);
-  color: #000;
+  color: var(--gold-on-bg);
   font-weight: 600;
   font-size: 0.88rem;
   border-radius: var(--radius-sm);
@@ -782,7 +785,7 @@ main {
   top: 12px;
   left: 0;
   background: var(--gold);
-  color: #000;
+  color: var(--gold-on-bg);
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -912,7 +915,7 @@ main {
 
 .learn-btn.mark {
   background: var(--success);
-  color: var(--text-primary);
+  color: #fff;
 }
 
 .learn-btn.mark:hover {
@@ -1147,7 +1150,7 @@ main {
 
 .verse-name-item.learned .verse-name-num {
   background: var(--success);
-  color: var(--text-primary);
+  color: #fff;
 }
 
 .verse-name-info {
@@ -1190,7 +1193,7 @@ main {
 
 .verse-learn-btn.mark {
   background: var(--success);
-  color: var(--text-primary);
+  color: #fff;
 }
 
 .verse-learn-btn.mark:hover {
@@ -1388,7 +1391,7 @@ main {
 
 .got-btn {
   background: var(--success);
-  color: var(--text-primary);
+  color: #fff;
 }
 
 .got-btn:hover {
