@@ -140,6 +140,32 @@ img {
 .header-title {
   text-align: center;
   margin-bottom: var(--space-md);
+  position: relative;
+}
+
+.font-controls {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  gap: 4px;
+}
+
+.font-btn {
+  cursor: pointer;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  transition: color var(--transition), border-color var(--transition);
+}
+
+.font-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--gold);
 }
 
 .title-sanskrit {
@@ -384,6 +410,136 @@ main {
   font-size: 0.9rem;
   color: var(--text-primary);
   line-height: 1.7;
+}
+
+/* Phala Shruti Section */
+.phala-shruti-section {
+  margin-bottom: var(--space-xl);
+}
+
+.phala-shruti-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--space-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background-color var(--transition);
+}
+
+.phala-shruti-toggle:hover {
+  background: var(--surface-hover);
+}
+
+.phala-shruti-toggle .section-title {
+  margin-bottom: 0;
+}
+
+.phala-shruti-content {
+  margin-top: var(--space-sm);
+}
+
+.phala-shruti-content[hidden] {
+  display: none;
+}
+
+.phala-shruti-verse {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-md);
+}
+
+.phala-shruti-verse.colophon {
+  border-left: 3px solid var(--gold);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.phala-shruti-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-sm);
+}
+
+.phala-shruti-deva {
+  font-family: var(--font-sanskrit);
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: var(--sanskrit);
+  line-height: 1.8;
+  margin-bottom: var(--space-sm);
+}
+
+.phala-shruti-translit {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  line-height: 1.7;
+  margin-bottom: var(--space-sm);
+}
+
+.phala-shruti-meaning {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  line-height: 1.7;
+}
+
+.phala-shruti-note {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+}
+
+.phala-shruti-note p {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.75;
+}
+
+/* Audio Section */
+.audio-section {
+  margin-bottom: var(--space-xl);
+}
+
+.audio-links {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.audio-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: background-color var(--transition);
+}
+
+.audio-link:hover {
+  background: var(--surface-hover);
+}
+
+.audio-title {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.audio-artist {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  flex-shrink: 0;
 }
 
 /* Quick Actions */
@@ -952,6 +1108,13 @@ main {
   color: var(--text-primary);
 }
 
+.practice-due-count {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--gold);
+  margin-bottom: var(--space-md);
+}
+
 /* Flashcard */
 .flashcard-container {
   perspective: 800px;
@@ -1149,6 +1312,12 @@ main {
     font-size: 1.4rem;
   }
 
+  .audio-link {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
   .quick-actions {
     flex-direction: column;
   }
@@ -1234,5 +1403,233 @@ main {
 
   .title-sanskrit {
     font-size: 1rem;
+  }
+}
+
+
+/* ========================================
+   Print Styles
+   ======================================== */
+
+@media print {
+  /* Reset to white background, black text */
+  :root {
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --surface-hover: #ffffff;
+    --gold: #333333;
+    --text-primary: #000000;
+    --text-secondary: #444444;
+    --sanskrit: #000000;
+    --border: #cccccc;
+    --success: #333333;
+    --focus: #000000;
+    --danger: #666666;
+  }
+
+  body {
+    background: #ffffff;
+    color: #000000;
+    font-size: 11pt;
+    line-height: 1.5;
+  }
+
+  /* Hide navigation, controls, and interactive elements */
+  .site-header,
+  .nav-tabs,
+  .quick-actions,
+  .action-btn,
+  .practice-controls,
+  .practice-actions,
+  .practice-score,
+  .flip-hint,
+  .flashcard-container,
+  .practice-empty,
+  .verse-nav,
+  .verse-progress-bar,
+  .verse-progress-text,
+  .names-controls,
+  .names-counter,
+  .name-actions,
+  .verse-actions,
+  .learn-btn,
+  .telegram-link,
+  #view-practice,
+  .site-footer .footer-repo {
+    display: none !important;
+  }
+
+  /* Show all views for printing */
+  .view[hidden] {
+    display: block !important;
+  }
+
+  main {
+    max-width: 100%;
+    padding: 0;
+  }
+
+  /* Remove animations */
+  .view {
+    animation: none;
+  }
+
+  /* Ensure all content is visible (no lazy loading hiding) */
+  .names-grid .name-card {
+    display: block !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    background: none;
+    border: 1px solid #cccccc;
+    margin-bottom: 6pt;
+    padding: 6pt 8pt;
+    padding-top: 6pt;
+  }
+
+  .name-tag {
+    position: static;
+    display: inline-block;
+    background: none;
+    color: #444444;
+    padding: 0;
+    font-size: 8pt;
+    margin-bottom: 2pt;
+  }
+
+  .name-card.learned .name-tag {
+    background: none;
+    color: #444444;
+  }
+
+  /* Compact name cards for list format */
+  .name-sanskrit {
+    font-size: 12pt;
+    color: #000000;
+  }
+
+  .name-translit {
+    font-size: 9pt;
+  }
+
+  .name-meaning-short {
+    font-size: 9pt;
+  }
+
+  /* Sanskrit text sizing */
+  .verse-sanskrit-text {
+    font-size: 11pt;
+    color: #000000;
+    line-height: 1.7;
+  }
+
+  .dhyana-deva,
+  .phala-shruti-deva {
+    font-size: 11pt;
+    color: #000000;
+  }
+
+  /* Verses - page breaks between them */
+  .verse-display {
+    break-before: auto;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border: none;
+    padding: 8pt 0;
+    border-bottom: 1px solid #cccccc;
+  }
+
+  /* Dhyana and Phala Shruti - force visible */
+  .dhyana-content,
+  .phala-shruti-content {
+    display: block !important;
+  }
+
+  .dhyana-content[hidden],
+  .phala-shruti-content[hidden] {
+    display: block !important;
+  }
+
+  .dhyana-toggle,
+  .phala-shruti-toggle {
+    border: none;
+    background: none;
+    padding: 0;
+  }
+
+  .toggle-icon {
+    display: none !important;
+  }
+
+  .dhyana-verse,
+  .phala-shruti-verse,
+  .phala-shruti-note {
+    border: none;
+    background: none;
+    padding: 6pt 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Stats grid - compact for print */
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4pt;
+    margin-bottom: 12pt;
+  }
+
+  .stat-card {
+    border: 1px solid #cccccc;
+    padding: 4pt;
+  }
+
+  .stat-number {
+    font-size: 14pt;
+    color: #000000;
+  }
+
+  /* Cards and surfaces - remove dark backgrounds */
+  .notd-card {
+    background: none;
+    border-left: 2px solid #000000;
+    padding: 6pt 8pt;
+  }
+
+  .notd-sanskrit {
+    font-size: 14pt;
+    color: #000000;
+  }
+
+  /* Footer */
+  .site-footer {
+    border-top: 1px solid #cccccc;
+    padding: 8pt 0;
+    margin-top: 12pt;
+  }
+
+  .footer-dedication,
+  .footer-source {
+    color: #444444;
+    font-size: 9pt;
+  }
+
+  /* Links in print */
+  a {
+    color: #000000;
+    text-decoration: none;
+  }
+
+  /* Expanded details - show in print */
+  .name-details {
+    display: block;
+    border-top: 1px solid #cccccc;
+    margin-top: 4pt;
+    padding-top: 4pt;
+  }
+
+  .name-commentary {
+    background: none;
+    padding: 4pt 0;
+    max-height: none;
+    overflow: visible;
   }
 }

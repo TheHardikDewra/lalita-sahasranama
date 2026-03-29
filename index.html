@@ -5,7 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Interactive guide to Sri Lalita Sahasranama - 1000 divine names with meanings, verses, and practice tools">
   <meta name="theme-color" content="#0f0f0f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta property="og:title" content="Sri Lalita Sahasranama">
+  <meta property="og:description" content="Interactive guide to the 1000 sacred names of Divine Mother Lalita Tripurasundari - with meanings, commentaries, verses, and practice tools">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://hardikdewra.github.io/lalita-sahasranama/">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Sri Lalita Sahasranama">
+  <meta name="twitter:description" content="1000 sacred names of the Divine Mother with meanings, commentaries, and practice tools">
   <title>Sri Lalita Sahasranama Stotra</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -65,6 +76,51 @@
         </button>
         <div class="dhyana-content" id="dhyana-content" hidden>
           <!-- Filled by JS -->
+        </div>
+      </div>
+
+      <div class="phala-shruti-section">
+        <button class="phala-shruti-toggle" id="phala-shruti-toggle" aria-expanded="false" aria-controls="phala-shruti-content">
+          <h2 class="section-title">Phala Shruti</h2>
+          <span class="toggle-icon" id="phala-shruti-toggle-icon">+</span>
+        </button>
+        <div class="phala-shruti-content" id="phala-shruti-content" hidden>
+          <div class="phala-shruti-verse">
+            <div class="phala-shruti-label">Closing Names</div>
+            <div class="phala-shruti-deva">श्रीशिवा शिव-शक्त्यैक्य-रूपिणी ललिताम्बिका ।</div>
+            <div class="phala-shruti-translit">srisiva siva-saktyaikya-rupini lalitambika</div>
+          </div>
+          <div class="phala-shruti-verse">
+            <div class="phala-shruti-label">Concluding Verse</div>
+            <div class="phala-shruti-deva">एवं श्रीललिता देव्या नाम्नां साहस्रकं जगुः ॥</div>
+            <div class="phala-shruti-translit">evam sri-lalita devya namnam sahasrakam jaguh</div>
+            <div class="phala-shruti-meaning">Thus the thousand names of Sri Lalita Devi have been sung.</div>
+          </div>
+          <div class="phala-shruti-verse colophon">
+            <div class="phala-shruti-deva">॥ इति श्रीब्रह्माण्डपुराणे उत्तरखण्डे श्रीहयग्रीवागस्त्यसंवादे श्रीललिता सहस्रनाम स्तोत्र कथनं सम्पूर्णम् ॥</div>
+            <div class="phala-shruti-meaning">Thus ends the narration of Sri Lalita Sahasranama Stotra, from the dialogue between Sri Hayagriva and Agastya, in the Uttarakhanda of the Brahmanda Purana.</div>
+          </div>
+          <div class="phala-shruti-note">
+            <p>The Phala Shruti describes the immense spiritual merit gained by reciting, hearing, or contemplating the thousand names of the Divine Mother. As per tradition, regular recitation with devotion bestows knowledge, prosperity, removal of obstacles, and ultimately liberation (moksha). The stotra is considered most auspicious when chanted during Navaratri, Fridays, and during one's daily sadhana.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="audio-section">
+        <h2 class="section-title">Chanting Audio</h2>
+        <div class="audio-links">
+          <a href="https://www.youtube.com/watch?v=cFvkthxOkJc" target="_blank" rel="noopener" class="audio-link">
+            <span class="audio-title">Sri Lalitha Sahasranama Stotram</span>
+            <span class="audio-artist">M.S. Subbulakshmi</span>
+          </a>
+          <a href="https://www.youtube.com/watch?v=c_SdNoE4p1k" target="_blank" rel="noopener" class="audio-link">
+            <span class="audio-title">Lalitha Sahasranama Stothram</span>
+            <span class="audio-artist">Priya Sisters</span>
+          </a>
+          <a href="https://www.youtube.com/channel/UCozFD0Pdk1Smw4j1Dgufv_Q" target="_blank" rel="noopener" class="audio-link">
+            <span class="audio-title">Lalitha Sahasranamam Lessons</span>
+            <span class="audio-artist">Bhaskara Prakasha Ashram</span>
+          </a>
         </div>
       </div>
 
@@ -195,5 +251,10 @@
 
   <script src="data.js"></script>
   <script src="app.js"></script>
+  <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+  </script>
 </body>
 </html>

@@ -86,13 +86,132 @@
     return STATE.learnedNames.has(num);
   }
 
+  // ---- SRS (SM-2 Spaced Repetition) ----
+  const SRS_KEY = 'lsn_srs';
+
+  function loadSRS() {
+    try {
+      const raw = localStorage.getItem(SRS_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveSRS(srsData) {
+    try {
+      localStorage.setItem(SRS_KEY, JSON.stringify(srsData));
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  function getSRSEntry(srsData, num) {
+    return srsData[num] || { interval: 0, easeFactor: 2.5, nextReview: null, repetitions: 0 };
+  }
+
+  function todayStr() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function recordSRS(nameNumber, quality) {
+    // quality: 5 = "Got It", 1 = "Review Again"
+    const srsData = loadSRS();
+    const entry = getSRSEntry(srsData, nameNumber);
+
+    if (quality >= 3) {
+      // Got It - increase interval
+      if (entry.repetitions === 0) {
+        entry.interval = 1;
+      } else if (entry.repetitions === 1) {
+        entry.interval = 3;
+      } else {
+        entry.interval = Math.round(entry.interval * entry.easeFactor);
+      }
+      entry.repetitions++;
+    } else {
+      // Review Again - reset
+      entry.interval = 1;
+      entry.repetitions = 0;
+    }
+
+    // SM-2 ease factor adjustment
+    entry.easeFactor += (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+    if (entry.easeFactor < 1.3) entry.easeFactor = 1.3;
+
+    // Set next review date
+    const next = new Date();
+    next.setDate(next.getDate() + entry.interval);
+    entry.nextReview = next.toISOString().slice(0, 10);
+
+    srsData[nameNumber] = entry;
+    saveSRS(srsData);
+  }
+
+  function countDueNames() {
+    const srsData = loadSRS();
+    const today = todayStr();
+    let count = 0;
+    DATA.names.forEach(n => {
+      const entry = srsData[n.number];
+      if (!entry) {
+        count++; // never reviewed = due
+      } else if (entry.nextReview <= today) {
+        count++;
+      }
+    });
+    return count;
+  }
+
+  // ---- Font Size ----
+  const FONTSIZE_KEY = 'lsn_fontsize';
+  const FONTSIZE_MAP = { small: '14px', normal: '16px', large: '18px' };
+
+  function loadFontSize() {
+    const val = localStorage.getItem(FONTSIZE_KEY) || 'normal';
+    applyFontSize(val);
+  }
+
+  function applyFontSize(size) {
+    if (!FONTSIZE_MAP[size]) size = 'normal';
+    document.documentElement.style.fontSize = FONTSIZE_MAP[size];
+    localStorage.setItem(FONTSIZE_KEY, size);
+  }
+
+  function getCurrentFontSize() {
+    return localStorage.getItem(FONTSIZE_KEY) || 'normal';
+  }
+
+  function cycleFontSize(direction) {
+    const sizes = ['small', 'normal', 'large'];
+    const current = getCurrentFontSize();
+    let idx = sizes.indexOf(current);
+    idx += direction;
+    if (idx < 0) idx = 0;
+    if (idx > sizes.length - 1) idx = sizes.length - 1;
+    applyFontSize(sizes[idx]);
+  }
+
   // ---- Router ----
   function getHash() {
     const h = window.location.hash.replace('#', '').trim();
-    return ['home', 'names', 'verses', 'practice'].includes(h) ? h : 'home';
+    // Deep link: #name/42
+    const nameMatch = h.match(/^name\/(\d+)$/);
+    if (nameMatch) return { view: 'names', deepLink: parseInt(nameMatch[1], 10) };
+    const view = ['home', 'names', 'verses', 'practice'].includes(h) ? h : 'home';
+    return { view, deepLink: null };
   }
 
-  function navigate(view) {
+  function navigate(viewOrObj) {
+    let view, deepLink;
+    if (typeof viewOrObj === 'string') {
+      view = viewOrObj;
+      deepLink = null;
+    } else {
+      view = viewOrObj.view;
+      deepLink = viewOrObj.deepLink;
+    }
+
     STATE.currentView = view;
     // Update tabs
     document.querySelectorAll('.nav-tab').forEach(tab => {
@@ -104,12 +223,14 @@
     });
     // Init view
     if (view === 'home') renderHome();
-    else if (view === 'names') initNames();
+    else if (view === 'names') initNames(deepLink);
     else if (view === 'verses') renderVerse(STATE.currentVerse);
     else if (view === 'practice') initPractice();
 
-    // Scroll to top of main
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    // Scroll to top of main (skip if deep linking - we'll scroll to card)
+    if (!deepLink) {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
   }
 
   window.addEventListener('hashchange', () => navigate(getHash()));
@@ -176,14 +297,51 @@
     toggle.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
   });
 
+  // Phala Shruti toggle
+  document.getElementById('phala-shruti-toggle').addEventListener('click', () => {
+    const content = document.getElementById('phala-shruti-content');
+    const icon = document.getElementById('phala-shruti-toggle-icon');
+    const toggle = document.getElementById('phala-shruti-toggle');
+    const isHidden = content.hidden;
+    content.hidden = !isHidden;
+    icon.textContent = isHidden ? '-' : '+';
+    toggle.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+  });
+
   // ---- Names View ----
   let filteredNames = [];
   let namesScrollSentinel = null;
 
-  function initNames() {
+  function initNames(deepLinkNum) {
     STATE.renderOffset = 0;
     STATE.expandedCard = null;
     filterAndRenderNames();
+    if (deepLinkNum && nameMap.has(deepLinkNum)) {
+      scrollToAndExpandName(deepLinkNum);
+    }
+  }
+
+  function scrollToAndExpandName(num) {
+    const grid = document.getElementById('names-grid');
+    // Make sure the name is rendered - render all batches until we find it
+    while (STATE.renderOffset < filteredNames.length) {
+      const existing = grid.querySelector(`[data-num="${num}"]`);
+      if (existing) break;
+      renderNamesBatch();
+    }
+    const card = grid.querySelector(`[data-num="${num}"]`);
+    if (card) {
+      // Expand
+      if (STATE.expandedCard && STATE.expandedCard !== card) {
+        STATE.expandedCard.classList.remove('expanded');
+      }
+      card.classList.add('expanded');
+      STATE.expandedCard = card;
+      // Scroll into view after a tick (let DOM settle)
+      requestAnimationFrame(() => {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    }
   }
 
   function filterNames() {
@@ -331,6 +489,13 @@
     }
     card.classList.toggle('expanded');
     STATE.expandedCard = card.classList.contains('expanded') ? card : null;
+
+    // Update URL for deep linking
+    if (STATE.expandedCard) {
+      history.replaceState(null, '', '#name/' + num);
+    } else {
+      history.replaceState(null, '', '#names');
+    }
   }
 
   function refreshNameCard(card, name) {
@@ -541,7 +706,15 @@
     const scope = STATE.practiceScope;
     let pool = [];
 
-    if (scope === 'unlearned') {
+    if (scope === 'due') {
+      // Due Today scope - only overdue and never-reviewed names
+      const srsData = loadSRS();
+      const today = todayStr();
+      pool = DATA.names.filter(n => {
+        const entry = srsData[n.number];
+        return !entry || entry.nextReview <= today;
+      });
+    } else if (scope === 'unlearned') {
       pool = DATA.names.filter(n => !isLearned(n.number));
     } else if (scope === 'all') {
       pool = [...DATA.names];
@@ -553,9 +726,43 @@
       });
     }
 
-    // Shuffle
-    STATE.practiceQueue = shuffleArray(pool);
+    // Sort by SRS priority: overdue first, then never reviewed, then shortest interval
+    const srsData = loadSRS();
+    const today = todayStr();
+
+    pool.sort((a, b) => {
+      const ea = srsData[a.number];
+      const eb = srsData[b.number];
+      const aOverdue = ea && ea.nextReview <= today;
+      const bOverdue = eb && eb.nextReview <= today;
+      const aNever = !ea;
+      const bNever = !eb;
+
+      // Overdue names first
+      if (aOverdue && !bOverdue) return -1;
+      if (!aOverdue && bOverdue) return 1;
+      // Then never reviewed
+      if (aNever && !bNever) return -1;
+      if (!aNever && bNever) return 1;
+      // Then by interval (shortest first)
+      const aInt = ea ? ea.interval : 0;
+      const bInt = eb ? eb.interval : 0;
+      return aInt - bInt;
+    });
+
+    STATE.practiceQueue = pool;
     STATE.practiceIndex = 0;
+
+    // Update due count display
+    updateDueCount();
+  }
+
+  function updateDueCount() {
+    const dueEl = document.getElementById('practice-due-count');
+    if (dueEl) {
+      const count = countDueNames();
+      dueEl.textContent = count > 0 ? `Due for review: ${count} names` : 'All caught up!';
+    }
   }
 
   function showNextCard() {
@@ -566,7 +773,7 @@
     const empty = document.getElementById('practice-empty');
 
     if (STATE.practiceIndex >= STATE.practiceQueue.length) {
-      // Reshuffle if we've gone through all
+      // Rebuild queue with fresh SRS data if we've gone through all
       if (STATE.practiceQueue.length === 0) {
         container.style.display = 'none';
         actions.hidden = true;
@@ -574,8 +781,7 @@
         empty.hidden = false;
         return;
       }
-      STATE.practiceQueue = shuffleArray(STATE.practiceQueue);
-      STATE.practiceIndex = 0;
+      buildPracticeQueue();
     }
 
     container.style.display = '';
@@ -649,19 +855,28 @@
   // Got it
   document.getElementById('btn-got').addEventListener('click', () => {
     const name = STATE.practiceQueue[STATE.practiceIndex];
-    if (name) markLearned(name.number);
+    if (name) {
+      markLearned(name.number);
+      recordSRS(name.number, 5);
+    }
     STATE.scoreGot++;
     STATE.practiceIndex++;
     updatePracticeScore();
+    updateDueCount();
     updateHomeStats();
     showNextCard();
   });
 
   // Review again
   document.getElementById('btn-review').addEventListener('click', () => {
+    const name = STATE.practiceQueue[STATE.practiceIndex];
+    if (name) {
+      recordSRS(name.number, 1);
+    }
     STATE.scoreReview++;
     STATE.practiceIndex++;
     updatePracticeScore();
+    updateDueCount();
     showNextCard();
   });
 
@@ -735,8 +950,48 @@
   // ---- Init ----
   function init() {
     loadProgress();
+    loadFontSize();
+    injectFontControls();
+    injectDueCountEl();
+    injectDueTodayOption();
     const view = getHash();
     navigate(view);
+  }
+
+  function injectFontControls() {
+    const header = document.querySelector('.header-title');
+    if (!header) return;
+    const controls = document.createElement('div');
+    controls.className = 'font-controls';
+    controls.innerHTML = '<button class="font-btn" id="font-dec" aria-label="Decrease font size">A-</button><button class="font-btn" id="font-inc" aria-label="Increase font size">A+</button>';
+    header.appendChild(controls);
+
+    document.getElementById('font-dec').addEventListener('click', () => cycleFontSize(-1));
+    document.getElementById('font-inc').addEventListener('click', () => cycleFontSize(1));
+  }
+
+  function injectDueCountEl() {
+    const scoreEl = document.getElementById('practice-score');
+    if (!scoreEl) return;
+    const dueEl = document.createElement('div');
+    dueEl.className = 'practice-due-count';
+    dueEl.id = 'practice-due-count';
+    scoreEl.insertAdjacentElement('afterend', dueEl);
+  }
+
+  function injectDueTodayOption() {
+    const scopeSelect = document.getElementById('practice-scope');
+    if (!scopeSelect) return;
+    // Insert "Due Today" after "Unlearned Only"
+    const unlearned = scopeSelect.querySelector('option[value="unlearned"]');
+    const dueOption = document.createElement('option');
+    dueOption.value = 'due';
+    dueOption.textContent = 'Due Today';
+    if (unlearned && unlearned.nextSibling) {
+      scopeSelect.insertBefore(dueOption, unlearned.nextSibling);
+    } else {
+      scopeSelect.appendChild(dueOption);
+    }
   }
 
   // Run

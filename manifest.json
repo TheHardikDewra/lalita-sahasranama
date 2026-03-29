@@ -1,0 +1,21 @@
+{
+  "name": "Sri Lalita Sahasranama",
+  "short_name": "Sahasranama",
+  "description": "Interactive guide to the 1000 sacred names of Divine Mother Lalita",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f0f0f",
+  "theme_color": "#0f0f0f",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
