@@ -33,6 +33,7 @@
       <a href="#names" class="nav-tab" role="tab" data-view="names">Names</a>
       <a href="#verses" class="nav-tab" role="tab" data-view="verses">Verses</a>
       <a href="#practice" class="nav-tab" role="tab" data-view="practice">Practice</a>
+      <a href="#chant" class="nav-tab" role="tab" data-view="chant">Chant</a>
     </nav>
   </header>
 
@@ -59,6 +60,30 @@
         <div class="stat-card">
           <span class="stat-number" id="stat-progress">0%</span>
           <span class="stat-label">Progress</span>
+        </div>
+      </div>
+
+      <div class="sadhana-section">
+        <h2 class="section-title">Sadhana Tracker</h2>
+        <div class="sadhana-card">
+          <div class="sadhana-stats">
+            <div class="sadhana-stat">
+              <span class="sadhana-stat-number" id="sadhana-total">0</span>
+              <span class="sadhana-stat-label">Total Recitations</span>
+            </div>
+            <div class="sadhana-stat">
+              <span class="sadhana-stat-number" id="sadhana-streak">0</span>
+              <span class="sadhana-stat-label">Day Streak</span>
+            </div>
+            <div class="sadhana-stat">
+              <span class="sadhana-stat-number" id="sadhana-month">0</span>
+              <span class="sadhana-stat-label">This Month</span>
+            </div>
+          </div>
+          <div class="sadhana-actions">
+            <button class="sadhana-log-btn" id="sadhana-log">Log Recitation</button>
+            <div class="sadhana-last" id="sadhana-last"></div>
+          </div>
         </div>
       </div>
 
@@ -241,11 +266,44 @@
         <p>No names available for this selection. Try a different scope.</p>
       </div>
     </section>
+    <!-- Chant View -->
+    <section id="view-chant" class="view" hidden>
+      <div class="chant-controls">
+        <button class="chant-btn" id="chant-fullscreen">Full Screen</button>
+        <div class="chant-verse-info" id="chant-verse-info">Verse 1 of 182</div>
+        <button class="chant-btn" id="chant-settings-toggle">Settings</button>
+      </div>
+      <div class="chant-settings" id="chant-settings" hidden>
+        <label>Start from verse: <input type="number" id="chant-start" min="1" max="182" value="1"></label>
+        <label>Auto-advance: <input type="checkbox" id="chant-auto"> <span id="chant-auto-label">Off</span></label>
+        <label>Speed: <input type="range" id="chant-speed" min="3" max="15" value="8"> <span id="chant-speed-label">8s</span></label>
+        <label>Show transliteration: <input type="checkbox" id="chant-show-translit" checked></label>
+        <label>Show meanings: <input type="checkbox" id="chant-show-meaning"></label>
+      </div>
+      <div class="chant-stage" id="chant-stage">
+        <div class="chant-verse-number" id="chant-verse-num"></div>
+        <div class="chant-sanskrit" id="chant-sanskrit"></div>
+        <div class="chant-transliteration" id="chant-translit"></div>
+        <div class="chant-meanings" id="chant-meanings"></div>
+      </div>
+      <div class="chant-nav">
+        <button class="chant-nav-btn" id="chant-prev">Prev</button>
+        <div class="chant-progress-dots" id="chant-dots"></div>
+        <button class="chant-nav-btn" id="chant-next">Next</button>
+      </div>
+    </section>
   </main>
 
   <footer class="site-footer">
     <p class="footer-dedication">A devotional offering to Maa Lalita Tripurasundari</p>
     <p class="footer-source">Source: <a href="https://t.me/OmSwamiJi" target="_blank" rel="noopener">Om Swami Ji's Telegram Community</a></p>
+    <div class="data-controls">
+      <button class="data-btn" id="export-data">Export Progress</button>
+      <label class="data-btn import-label">
+        Import Progress
+        <input type="file" id="import-data" accept=".json" hidden>
+      </label>
+    </div>
     <p class="footer-repo"><a href="https://github.com/HardikDewra/lalita-sahasranama" target="_blank" rel="noopener">GitHub</a></p>
   </footer>
 

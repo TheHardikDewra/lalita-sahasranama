@@ -25,6 +25,13 @@
     renderBatchSize: 80,
     renderOffset: 0,
     isRendering: false,
+    chantVerse: 1,
+    chantAuto: false,
+    chantSpeed: 8,
+    chantShowTranslit: true,
+    chantShowMeaning: false,
+    chantFullscreen: false,
+    chantTimer: null,
   };
 
   // ---- Data helpers ----
@@ -163,6 +170,41 @@
     return count;
   }
 
+  // ---- Notes ----
+  const NOTES_KEY = 'lsn_notes';
+
+  function loadNotes() {
+    try {
+      const raw = localStorage.getItem(NOTES_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveNotes(notes) {
+    try {
+      localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  function getNote(num) {
+    const notes = loadNotes();
+    return notes[num] || '';
+  }
+
+  function setNote(num, text) {
+    const notes = loadNotes();
+    if (text.trim()) {
+      notes[num] = text;
+    } else {
+      delete notes[num];
+    }
+    saveNotes(notes);
+  }
+
   // ---- Font Size ----
   const FONTSIZE_KEY = 'lsn_fontsize';
   const FONTSIZE_MAP = { small: '14px', normal: '16px', large: '18px' };
@@ -198,7 +240,7 @@
     // Deep link: #name/42
     const nameMatch = h.match(/^name\/(\d+)$/);
     if (nameMatch) return { view: 'names', deepLink: parseInt(nameMatch[1], 10) };
-    const view = ['home', 'names', 'verses', 'practice'].includes(h) ? h : 'home';
+    const view = ['home', 'names', 'verses', 'practice', 'chant'].includes(h) ? h : 'home';
     return { view, deepLink: null };
   }
 
@@ -226,6 +268,21 @@
     else if (view === 'names') initNames(deepLink);
     else if (view === 'verses') renderVerse(STATE.currentVerse);
     else if (view === 'practice') initPractice();
+    else if (view === 'chant') initChant();
+
+    // Stop chant auto-advance when navigating away
+    if (view !== 'chant' && STATE.chantTimer) {
+      clearInterval(STATE.chantTimer);
+      STATE.chantTimer = null;
+    }
+    // Remove fullscreen class when leaving chant
+    if (view !== 'chant' && STATE.chantFullscreen) {
+      STATE.chantFullscreen = false;
+      document.body.classList.remove('chant-fullscreen');
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(function() {});
+      }
+    }
 
     // Scroll to top of main (skip if deep linking - we'll scroll to card)
     if (!deepLink) {
@@ -253,6 +310,105 @@
     return n.toLocaleString('en-IN');
   }
 
+  // ---- Sadhana Tracker ----
+  const SADHANA_KEY = 'lsn_sadhana';
+
+  function loadSadhana() {
+    try {
+      const raw = localStorage.getItem(SADHANA_KEY);
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (data && typeof data.total === 'number' && Array.isArray(data.log)) {
+          return data;
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+    return { total: 0, log: [], streak: 0 };
+  }
+
+  function saveSadhana(data) {
+    try {
+      localStorage.setItem(SADHANA_KEY, JSON.stringify(data));
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  function logRecitation() {
+    const data = loadSadhana();
+    const today = todayStr();
+    const existing = data.log.find(e => e.date === today);
+    if (existing) {
+      existing.count++;
+    } else {
+      data.log.push({ date: today, count: 1 });
+    }
+    data.total++;
+    data.streak = calcStreak(data.log);
+    saveSadhana(data);
+    renderSadhana();
+  }
+
+  function calcStreak(log) {
+    if (!log.length) return 0;
+    const dateSet = new Set(log.filter(e => e.count > 0).map(e => e.date));
+    let streak = 0;
+    const d = new Date();
+    while (true) {
+      const ds = d.toISOString().slice(0, 10);
+      if (dateSet.has(ds)) {
+        streak++;
+        d.setDate(d.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+    return streak;
+  }
+
+  function renderSadhana() {
+    const data = loadSadhana();
+    const totalEl = document.getElementById('sadhana-total');
+    const streakEl = document.getElementById('sadhana-streak');
+    const monthEl = document.getElementById('sadhana-month');
+    const lastEl = document.getElementById('sadhana-last');
+
+    if (!totalEl) return;
+
+    data.streak = calcStreak(data.log);
+
+    totalEl.textContent = formatNumber(data.total);
+    streakEl.textContent = data.streak;
+
+    // This month count
+    const now = new Date();
+    const monthPrefix = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    let monthCount = 0;
+    data.log.forEach(e => {
+      if (e.date.startsWith(monthPrefix)) {
+        monthCount += e.count;
+      }
+    });
+    monthEl.textContent = formatNumber(monthCount);
+
+    // Last recitation date
+    if (data.log.length > 0) {
+      const sorted = [...data.log].sort((a, b) => b.date.localeCompare(a.date));
+      const lastDate = new Date(sorted[0].date + 'T00:00:00');
+      const formatted = lastDate.toLocaleDateString('en-US', {
+        year: 'numeric', month: 'long', day: 'numeric'
+      });
+      lastEl.textContent = 'Last: ' + formatted;
+    } else {
+      lastEl.textContent = '';
+    }
+  }
+
+  // Sadhana log button
+  document.getElementById('sadhana-log').addEventListener('click', logRecitation);
+
   // ---- Home View ----
   function renderHome() {
     const learned = STATE.learnedNames.size;
@@ -262,6 +418,9 @@
     document.getElementById('stat-verses').textContent = formatNumber(TOTAL_VERSES);
     document.getElementById('stat-learned').textContent = formatNumber(learned);
     document.getElementById('stat-progress').textContent = pct + '%';
+
+    // Sadhana tracker
+    renderSadhana();
 
     // Name of the Day
     const notd = getNameOfTheDay();
@@ -436,9 +595,14 @@
 
     const hasCommentary = name.commentary && name.commentary.trim().length > 0;
     const hasMantra = name.mantra && name.mantra.trim().length > 0;
+    const hasSimpleMantra = !hasMantra && name.simpleMantra && name.simpleMantra.trim().length > 0;
+    const displayMantra = hasMantra ? name.mantra : (hasSimpleMantra ? name.simpleMantra : '');
+    const existingNote = getNote(name.number);
+    const hasNote = existingNote.length > 0;
 
     card.innerHTML = `
       <div class="name-tag">#${name.number}</div>
+      ${hasNote ? '<div class="note-indicator"></div>' : ''}
       <div class="name-card-header">
         <div class="name-info">
           <div class="name-sanskrit">${name.sanskrit}</div>
@@ -452,8 +616,11 @@
           <div class="name-detail-value">${verseInfo}</div>
           ${verseSanskrit ? `<div class="name-detail-value sanskrit-verse">${verseSanskrit}</div>` : ''}
         </div>
-        ${hasMantra ? `<div class="name-mantra">${escHtml(name.mantra)}</div>` : ''}
+        ${displayMantra ? `<div class="name-mantra${hasMantra ? '' : ' simple'}">${escHtml(displayMantra)}</div>` : ''}
         ${hasCommentary ? `<div class="name-commentary">${escHtml(name.commentary)}</div>` : ''}
+        <div class="name-notes">
+          <textarea class="note-input" placeholder="Add your personal notes..." data-note="${name.number}">${escHtml(existingNote)}</textarea>
+        </div>
         <div class="name-actions">
           <button class="learn-btn ${isLearned(name.number) ? 'unmark' : 'mark'}" data-learn="${name.number}">
             ${isLearned(name.number) ? 'Unmark Learned' : 'Mark as Learned'}
@@ -478,6 +645,24 @@
       refreshNameCard(card, name);
       updateNamesCounter();
       updateHomeStats();
+    });
+
+    // Note textarea - auto-save on blur
+    const noteInput = card.querySelector('.note-input');
+    noteInput.addEventListener('click', (e) => e.stopPropagation());
+    noteInput.addEventListener('blur', () => {
+      const num = parseInt(noteInput.dataset.note, 10);
+      const text = noteInput.value;
+      setNote(num, text);
+      // Update note indicator
+      const indicator = card.querySelector('.note-indicator');
+      if (text.trim() && !indicator) {
+        const dot = document.createElement('div');
+        dot.className = 'note-indicator';
+        card.appendChild(dot);
+      } else if (!text.trim() && indicator) {
+        indicator.remove();
+      }
     });
 
     return card;
@@ -687,7 +872,7 @@
   // Keyboard nav for verses
   document.addEventListener('keydown', (e) => {
     if (STATE.currentView !== 'verses') return;
-    if (e.target.tagName === 'INPUT') return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     if (e.key === 'ArrowLeft') renderVerse(STATE.currentVerse - 1);
     if (e.key === 'ArrowRight') renderVerse(STATE.currentVerse + 1);
   });
@@ -903,7 +1088,7 @@
   // Keyboard shortcuts for practice
   document.addEventListener('keydown', (e) => {
     if (STATE.currentView !== 'practice') return;
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
 
     if (e.key === ' ' || e.key === 'Enter') {
       e.preventDefault();
@@ -918,6 +1103,296 @@
       if (STATE.practiceFlipped) {
         document.getElementById('btn-review').click();
       }
+    }
+  });
+
+
+  // ---- Chant View ----
+  const CHANT_POS_KEY = 'lsn_chant_pos';
+  const CHANT_SETTINGS_KEY = 'lsn_chant_settings';
+  const DEVA_DIGITS = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+
+  function toDevanagariNum(n) {
+    return String(n).split('').map(function(d) { return DEVA_DIGITS[parseInt(d, 10)]; }).join('');
+  }
+
+  function loadChantSettings() {
+    try {
+      var raw = localStorage.getItem(CHANT_SETTINGS_KEY);
+      if (raw) {
+        var s = JSON.parse(raw);
+        if (typeof s.speed === 'number') STATE.chantSpeed = s.speed;
+        if (typeof s.showTranslit === 'boolean') STATE.chantShowTranslit = s.showTranslit;
+        if (typeof s.showMeaning === 'boolean') STATE.chantShowMeaning = s.showMeaning;
+        if (typeof s.auto === 'boolean') STATE.chantAuto = s.auto;
+      }
+    } catch (e) { /* ignore */ }
+    try {
+      var pos = localStorage.getItem(CHANT_POS_KEY);
+      if (pos) {
+        var v = parseInt(pos, 10);
+        if (v >= 1 && v <= TOTAL_VERSES) STATE.chantVerse = v;
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  function saveChantSettings() {
+    try {
+      localStorage.setItem(CHANT_SETTINGS_KEY, JSON.stringify({
+        speed: STATE.chantSpeed,
+        showTranslit: STATE.chantShowTranslit,
+        showMeaning: STATE.chantShowMeaning,
+        auto: STATE.chantAuto,
+      }));
+    } catch (e) { /* ignore */ }
+  }
+
+  function saveChantPos() {
+    try {
+      localStorage.setItem(CHANT_POS_KEY, String(STATE.chantVerse));
+    } catch (e) { /* ignore */ }
+  }
+
+  function initChant() {
+    loadChantSettings();
+
+    // Sync UI controls with state
+    var startInput = document.getElementById('chant-start');
+    var autoCheck = document.getElementById('chant-auto');
+    var autoLabel = document.getElementById('chant-auto-label');
+    var speedSlider = document.getElementById('chant-speed');
+    var speedLabel = document.getElementById('chant-speed-label');
+    var translitCheck = document.getElementById('chant-show-translit');
+    var meaningCheck = document.getElementById('chant-show-meaning');
+
+    startInput.value = STATE.chantVerse;
+    autoCheck.checked = STATE.chantAuto;
+    autoLabel.textContent = STATE.chantAuto ? 'On' : 'Off';
+    speedSlider.value = STATE.chantSpeed;
+    speedLabel.textContent = STATE.chantSpeed + 's';
+    translitCheck.checked = STATE.chantShowTranslit;
+    meaningCheck.checked = STATE.chantShowMeaning;
+
+    buildChantDots();
+    renderChantVerse(STATE.chantVerse);
+
+    if (STATE.chantAuto) {
+      startChantTimer();
+    }
+  }
+
+  function buildChantDots() {
+    var container = document.getElementById('chant-dots');
+    container.innerHTML = '';
+    for (var i = 1; i <= TOTAL_VERSES; i++) {
+      var dot = document.createElement('span');
+      dot.className = 'chant-dot' + (i === STATE.chantVerse ? ' active' : '');
+      dot.dataset.verse = i;
+      container.appendChild(dot);
+    }
+  }
+
+  function updateChantDots() {
+    var dots = document.querySelectorAll('.chant-dot');
+    dots.forEach(function(d) {
+      d.classList.toggle('active', parseInt(d.dataset.verse, 10) === STATE.chantVerse);
+    });
+    // Scroll active dot into view
+    var activeDot = document.querySelector('.chant-dot.active');
+    if (activeDot) {
+      activeDot.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+    }
+  }
+
+  function renderChantVerse(num) {
+    num = Math.max(1, Math.min(TOTAL_VERSES, num));
+    STATE.chantVerse = num;
+    saveChantPos();
+
+    var verse = DATA.verses[num];
+    var names = getNamesByVerse(num);
+    var stage = document.getElementById('chant-stage');
+
+    // Fade out
+    stage.classList.add('chant-fade');
+
+    setTimeout(function() {
+      // Verse number in Devanagari
+      document.getElementById('chant-verse-num').textContent = '॥ ' + toDevanagariNum(num) + ' ॥';
+
+      // Sanskrit text
+      document.getElementById('chant-sanskrit').textContent = verse ? verse.sanskrit : '';
+
+      // Transliteration - combine name transliterations
+      var translitEl = document.getElementById('chant-translit');
+      if (STATE.chantShowTranslit && names.length > 0) {
+        translitEl.textContent = names.map(function(n) { return n.transliteration; }).join(' | ');
+        translitEl.hidden = false;
+      } else {
+        translitEl.hidden = true;
+      }
+
+      // Meanings
+      var meaningsEl = document.getElementById('chant-meanings');
+      if (STATE.chantShowMeaning && names.length > 0) {
+        meaningsEl.innerHTML = names.map(function(n) {
+          return '<div><strong>' + escHtml(n.transliteration) + '</strong> - ' + escHtml(n.meaning) + '</div>';
+        }).join('');
+        meaningsEl.hidden = false;
+      } else {
+        meaningsEl.hidden = true;
+      }
+
+      // Update info bar
+      document.getElementById('chant-verse-info').textContent = 'Verse ' + num + ' of ' + TOTAL_VERSES;
+
+      // Update start input
+      document.getElementById('chant-start').value = num;
+
+      // Update nav buttons
+      document.getElementById('chant-prev').disabled = num <= 1;
+      document.getElementById('chant-next').disabled = num >= TOTAL_VERSES;
+
+      // Update dots
+      updateChantDots();
+
+      // Fade in
+      stage.classList.remove('chant-fade');
+    }, 150);
+  }
+
+  function chantNext() {
+    if (STATE.chantVerse >= TOTAL_VERSES) {
+      if (STATE.chantAuto) {
+        stopChantTimer();
+        STATE.chantAuto = false;
+        document.getElementById('chant-auto').checked = false;
+        document.getElementById('chant-auto-label').textContent = 'Off';
+        saveChantSettings();
+      }
+      return;
+    }
+    renderChantVerse(STATE.chantVerse + 1);
+  }
+
+  function chantPrev() {
+    if (STATE.chantVerse <= 1) return;
+    renderChantVerse(STATE.chantVerse - 1);
+  }
+
+  function startChantTimer() {
+    stopChantTimer();
+    STATE.chantTimer = setInterval(chantNext, STATE.chantSpeed * 1000);
+  }
+
+  function stopChantTimer() {
+    if (STATE.chantTimer) {
+      clearInterval(STATE.chantTimer);
+      STATE.chantTimer = null;
+    }
+  }
+
+  function toggleChantFullscreen() {
+    STATE.chantFullscreen = !STATE.chantFullscreen;
+    document.body.classList.toggle('chant-fullscreen', STATE.chantFullscreen);
+
+    var btn = document.getElementById('chant-fullscreen');
+    btn.textContent = STATE.chantFullscreen ? 'Exit Full Screen' : 'Full Screen';
+
+    if (STATE.chantFullscreen) {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(function() {});
+      }
+    } else {
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(function() {});
+      }
+    }
+  }
+
+  // Chant event listeners
+  document.getElementById('chant-prev').addEventListener('click', chantPrev);
+  document.getElementById('chant-next').addEventListener('click', chantNext);
+
+  document.getElementById('chant-fullscreen').addEventListener('click', toggleChantFullscreen);
+
+  document.getElementById('chant-settings-toggle').addEventListener('click', function() {
+    var panel = document.getElementById('chant-settings');
+    panel.hidden = !panel.hidden;
+  });
+
+  document.getElementById('chant-start').addEventListener('change', function(e) {
+    var val = parseInt(e.target.value, 10);
+    if (isNaN(val) || val < 1) val = 1;
+    if (val > TOTAL_VERSES) val = TOTAL_VERSES;
+    renderChantVerse(val);
+  });
+
+  document.getElementById('chant-auto').addEventListener('change', function(e) {
+    STATE.chantAuto = e.target.checked;
+    document.getElementById('chant-auto-label').textContent = STATE.chantAuto ? 'On' : 'Off';
+    saveChantSettings();
+    if (STATE.chantAuto) {
+      startChantTimer();
+    } else {
+      stopChantTimer();
+    }
+  });
+
+  document.getElementById('chant-speed').addEventListener('input', function(e) {
+    STATE.chantSpeed = parseInt(e.target.value, 10);
+    document.getElementById('chant-speed-label').textContent = STATE.chantSpeed + 's';
+    saveChantSettings();
+    if (STATE.chantAuto) {
+      startChantTimer();
+    }
+  });
+
+  document.getElementById('chant-show-translit').addEventListener('change', function(e) {
+    STATE.chantShowTranslit = e.target.checked;
+    saveChantSettings();
+    renderChantVerse(STATE.chantVerse);
+  });
+
+  document.getElementById('chant-show-meaning').addEventListener('change', function(e) {
+    STATE.chantShowMeaning = e.target.checked;
+    saveChantSettings();
+    renderChantVerse(STATE.chantVerse);
+  });
+
+  // Chant keyboard navigation
+  document.addEventListener('keydown', function(e) {
+    if (STATE.currentView !== 'chant') return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+
+    if (e.key === 'ArrowRight' || e.key === ' ') {
+      e.preventDefault();
+      chantNext();
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      chantPrev();
+    } else if (e.key === 'f' || e.key === 'F') {
+      toggleChantFullscreen();
+    } else if (e.key === 'Escape' && STATE.chantFullscreen) {
+      toggleChantFullscreen();
+    }
+  });
+
+  // Handle browser exiting fullscreen (e.g. pressing Esc natively)
+  document.addEventListener('fullscreenchange', function() {
+    if (!document.fullscreenElement && STATE.chantFullscreen) {
+      STATE.chantFullscreen = false;
+      document.body.classList.remove('chant-fullscreen');
+      var btn = document.getElementById('chant-fullscreen');
+      if (btn) btn.textContent = 'Full Screen';
+    }
+  });
+
+  // Chant dot click navigation
+  document.getElementById('chant-dots').addEventListener('click', function(e) {
+    var dot = e.target.closest('.chant-dot');
+    if (dot && dot.dataset.verse) {
+      renderChantVerse(parseInt(dot.dataset.verse, 10));
     }
   });
 
@@ -946,6 +1421,65 @@
     return a;
   }
 
+
+  // ---- Export / Import ----
+  const EXPECTED_KEYS = ['lsn_learned', 'lsn_srs', 'lsn_notes', 'lsn_sadhana', 'lsn_fontsize', 'lsn_chant_pos'];
+
+  function exportData() {
+    const data = {};
+    EXPECTED_KEYS.forEach(key => {
+      const val = localStorage.getItem(key);
+      if (val !== null) {
+        data[key] = JSON.parse(val);
+      }
+    });
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const today = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = 'lalita-sahasranama-backup-' + today + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function importData(file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        // Validate: at least one expected key must be present
+        const hasValidKey = EXPECTED_KEYS.some(key => key in data);
+        if (!hasValidKey) {
+          alert('Invalid backup file. No recognized data found.');
+          return;
+        }
+        if (!confirm('This will replace your current progress. Continue?')) {
+          return;
+        }
+        EXPECTED_KEYS.forEach(key => {
+          if (key in data) {
+            localStorage.setItem(key, JSON.stringify(data[key]));
+          }
+        });
+        window.location.reload();
+      } catch (err) {
+        alert('Failed to read backup file. Make sure it is a valid JSON file.');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  document.getElementById('export-data').addEventListener('click', exportData);
+  document.getElementById('import-data').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      importData(file);
+      e.target.value = '';
+    }
+  });
 
   // ---- Init ----
   function init() {

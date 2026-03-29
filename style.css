@@ -297,6 +297,71 @@ main {
   margin-bottom: var(--space-md);
 }
 
+/* Sadhana Tracker */
+.sadhana-section {
+  margin-bottom: var(--space-xl);
+}
+
+.sadhana-card {
+  background: var(--surface);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  padding: var(--space-lg);
+}
+
+.sadhana-stats {
+  display: flex;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-md);
+}
+
+.sadhana-stat {
+  text-align: center;
+  flex: 1;
+}
+
+.sadhana-stat-number {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gold);
+  line-height: 1.2;
+}
+
+.sadhana-stat-label {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  margin-top: var(--space-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sadhana-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.sadhana-log-btn {
+  padding: var(--space-xs) var(--space-lg);
+  background: var(--gold);
+  color: #000;
+  font-weight: 600;
+  font-size: 0.88rem;
+  border-radius: var(--radius-sm);
+  transition: opacity var(--transition);
+}
+
+.sadhana-log-btn:hover {
+  opacity: 0.85;
+}
+
+.sadhana-last {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
 /* Name of the Day */
 .notd-section {
   margin-bottom: var(--space-xl);
@@ -764,9 +829,13 @@ main {
 .name-mantra {
   margin-top: var(--space-sm);
   font-family: var(--font-sanskrit-body);
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   color: var(--gold);
   font-weight: 500;
+}
+
+.name-mantra.simple {
+  font-size: 1rem;
 }
 
 .name-actions {
@@ -823,6 +892,45 @@ main {
   text-align: center;
   padding: var(--space-2xl) var(--space-lg);
   color: var(--text-secondary);
+}
+
+/* Name Notes */
+.name-notes {
+  margin-top: var(--space-sm);
+}
+
+.note-input {
+  width: 100%;
+  min-height: 60px;
+  resize: vertical;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  padding: var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  transition: border-color var(--transition);
+}
+
+.note-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.note-input:focus {
+  border-color: var(--gold);
+  outline: none;
+}
+
+.note-indicator {
+  width: 6px;
+  height: 6px;
+  background: var(--gold);
+  border-radius: 50%;
+  position: absolute;
+  top: 14px;
+  right: 12px;
 }
 
 
@@ -1238,6 +1346,268 @@ main {
 
 
 /* ========================================
+   Chant View
+   ======================================== */
+
+#view-chant {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 200px);
+}
+
+#view-chant[hidden] {
+  display: none;
+}
+
+.chant-controls {
+  position: sticky;
+  top: 85px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(15, 15, 15, 0.92);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-md);
+}
+
+.chant-btn {
+  padding: var(--space-xs) var(--space-md);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--gold);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  transition: background-color var(--transition), color var(--transition);
+}
+
+.chant-btn:hover {
+  background: var(--gold);
+  color: var(--bg);
+}
+
+.chant-verse-info {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.03em;
+}
+
+.chant-settings {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
+  margin-bottom: var(--space-lg);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md) var(--space-xl);
+}
+
+.chant-settings[hidden] {
+  display: none;
+}
+
+.chant-settings label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.chant-settings input[type="number"] {
+  width: 56px;
+  padding: var(--space-xs);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.chant-settings input[type="number"]:focus {
+  border-color: var(--gold);
+  outline: none;
+}
+
+.chant-settings input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+
+.chant-settings input[type="range"] {
+  width: 100px;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+
+.chant-settings span {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  min-width: 24px;
+}
+
+.chant-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--space-xl) var(--space-lg);
+  width: 100%;
+  transition: opacity 300ms ease;
+}
+
+.chant-verse-number {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 0.06em;
+  font-variant: small-caps;
+  text-align: center;
+  margin-bottom: var(--space-md);
+}
+
+.chant-sanskrit {
+  font-family: var(--font-sanskrit);
+  font-size: 2.2rem;
+  font-weight: 500;
+  color: var(--sanskrit);
+  line-height: 2.0;
+  text-align: center;
+  margin-bottom: var(--space-lg);
+}
+
+.chant-transliteration {
+  font-size: 1rem;
+  font-style: italic;
+  color: var(--text-primary);
+  text-align: center;
+  line-height: 1.8;
+  margin-bottom: var(--space-md);
+}
+
+.chant-transliteration[hidden] {
+  display: none;
+}
+
+.chant-meanings {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.7;
+  max-width: 600px;
+}
+
+.chant-meanings[hidden] {
+  display: none;
+}
+
+.chant-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  padding: var(--space-md) 0;
+  margin-top: auto;
+}
+
+.chant-nav-btn {
+  padding: var(--space-xs) var(--space-lg);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--gold);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  transition: background-color var(--transition), color var(--transition);
+}
+
+.chant-nav-btn:hover {
+  background: var(--gold);
+  color: var(--bg);
+}
+
+.chant-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.chant-nav-btn:disabled:hover {
+  background: transparent;
+  color: var(--gold);
+}
+
+.chant-progress-dots {
+  display: flex;
+  gap: 3px;
+  max-width: 300px;
+  overflow-x: auto;
+  padding: 4px 0;
+  scrollbar-width: none;
+}
+
+.chant-progress-dots::-webkit-scrollbar {
+  display: none;
+}
+
+.chant-dot {
+  flex-shrink: 0;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background-color var(--transition);
+}
+
+.chant-dot.active {
+  background: var(--gold);
+}
+
+/* Verse fade transition */
+.chant-stage.chant-fade {
+  opacity: 0;
+}
+
+/* Full-screen chanting mode */
+body.chant-fullscreen .site-header,
+body.chant-fullscreen .site-footer {
+  display: none;
+}
+
+body.chant-fullscreen main {
+  max-width: 100%;
+  padding: 0 var(--space-lg);
+  min-height: 100vh;
+}
+
+body.chant-fullscreen #view-chant {
+  min-height: 100vh;
+}
+
+body.chant-fullscreen .chant-controls {
+  top: 0;
+}
+
+body.chant-fullscreen .chant-sanskrit {
+  font-size: 2.6rem;
+}
+
+body.chant-fullscreen .chant-stage {
+  padding: var(--space-2xl) var(--space-lg);
+}
+
+
+/* ========================================
    Footer
    ======================================== */
 
@@ -1264,6 +1634,34 @@ main {
   font-size: 0.8rem;
 }
 
+/* Data Controls (Export/Import) */
+.data-controls {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.data-btn {
+  padding: var(--space-xs) var(--space-md);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  transition: border-color var(--transition), color var(--transition);
+}
+
+.data-btn:hover {
+  border-color: var(--gold);
+  color: var(--text-primary);
+}
+
+.import-label {
+  cursor: pointer;
+}
+
 
 /* ========================================
    Responsive
@@ -1272,6 +1670,23 @@ main {
 @media (max-width: 700px) {
   .site-header {
     padding: var(--space-sm) var(--space-md);
+  }
+
+  .chant-controls {
+    top: 75px;
+  }
+
+  .chant-sanskrit {
+    font-size: 1.8rem;
+  }
+
+  .chant-settings {
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  body.chant-fullscreen .chant-sanskrit {
+    font-size: 2.0rem;
   }
 
   .title-sanskrit {
@@ -1297,6 +1712,20 @@ main {
 
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-sm);
+  }
+
+  .sadhana-stats {
+    gap: var(--space-md);
+  }
+
+  .sadhana-stat-number {
+    font-size: 1.25rem;
+  }
+
+  .sadhana-actions {
+    flex-direction: column;
+    align-items: flex-start;
     gap: var(--space-sm);
   }
 
@@ -1454,7 +1883,12 @@ main {
   .verse-actions,
   .learn-btn,
   .telegram-link,
+  .name-notes,
+  .note-indicator,
+  .data-controls,
+  .sadhana-section,
   #view-practice,
+  #view-chant,
   .site-footer .footer-repo {
     display: none !important;
   }
