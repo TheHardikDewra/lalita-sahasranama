@@ -1302,6 +1302,7 @@ main {
 
 .flashcard {
   position: relative;
+  width: 100%;
   min-height: 260px;
   cursor: pointer;
   transform-style: preserve-3d;
