@@ -1423,7 +1423,7 @@
 
 
   // ---- Export / Import ----
-  const EXPECTED_KEYS = ['lsn_learned', 'lsn_srs', 'lsn_notes', 'lsn_sadhana', 'lsn_fontsize', 'lsn_chant_pos'];
+  const EXPECTED_KEYS = ['lsn_learned', 'lsn_srs', 'lsn_notes', 'lsn_sadhana', 'lsn_fontsize', 'lsn_chant_pos', 'lsn_theme'];
 
   function exportData() {
     const data = {};
@@ -1483,6 +1483,7 @@
 
   // ---- Init ----
   function init() {
+    initTheme();
     loadProgress();
     loadFontSize();
     injectFontControls();
@@ -1493,15 +1494,48 @@
   }
 
   function injectFontControls() {
-    const header = document.querySelector('.header-title');
-    if (!header) return;
-    const controls = document.createElement('div');
-    controls.className = 'font-controls';
+    const controls = document.getElementById('font-controls');
+    if (!controls) return;
     controls.innerHTML = '<button class="font-btn" id="font-dec" aria-label="Decrease font size">A-</button><button class="font-btn" id="font-inc" aria-label="Increase font size">A+</button>';
-    header.appendChild(controls);
 
     document.getElementById('font-dec').addEventListener('click', () => cycleFontSize(-1));
     document.getElementById('font-inc').addEventListener('click', () => cycleFontSize(1));
+  }
+
+  // ---- Theme (light/dark/system) ----
+  const THEME_KEY = 'lsn_theme';
+  const THEME_CYCLE = ['system', 'light', 'dark'];
+  const THEME_LABELS = { system: 'System', light: 'Light', dark: 'Dark' };
+
+  function getStoredTheme() {
+    return localStorage.getItem(THEME_KEY) || 'system';
+  }
+
+  function applyTheme(mode) {
+    const html = document.documentElement;
+    if (mode === 'dark') {
+      html.setAttribute('data-theme', 'dark');
+    } else if (mode === 'light') {
+      html.setAttribute('data-theme', 'light');
+    } else {
+      html.removeAttribute('data-theme');
+    }
+    const btn = document.getElementById('theme-toggle');
+    if (btn) btn.textContent = THEME_LABELS[mode];
+    localStorage.setItem(THEME_KEY, mode);
+  }
+
+  function cycleTheme() {
+    const current = getStoredTheme();
+    const idx = THEME_CYCLE.indexOf(current);
+    const next = THEME_CYCLE[(idx + 1) % THEME_CYCLE.length];
+    applyTheme(next);
+  }
+
+  function initTheme() {
+    applyTheme(getStoredTheme());
+    const btn = document.getElementById('theme-toggle');
+    if (btn) btn.addEventListener('click', cycleTheme);
   }
 
   function injectDueCountEl() {

@@ -2,6 +2,7 @@
    CSS Custom Properties
    ======================================== */
 
+/* Dark theme (default) */
 :root {
   --bg: #0f0f0f;
   --surface: #1a1a1a;
@@ -14,6 +15,38 @@
   --success: #4a8c5c;
   --focus: #c9a84c;
   --danger: #8c4a4a;
+
+/* Light theme */
+html[data-theme="light"] {
+  --bg: #f5f2ed;
+  --surface: #ffffff;
+  --surface-hover: #f0ebe3;
+  --gold: #9e7c2e;
+  --text-primary: #1a1a1a;
+  --text-secondary: #6b6560;
+  --sanskrit: #8b6914;
+  --border: #d9d3c7;
+  --success: #3a7a4a;
+  --focus: #9e7c2e;
+  --danger: #8c4a4a;
+}
+
+/* System preference: light */
+@media (prefers-color-scheme: light) {
+  html:not([data-theme="dark"]) {
+    --bg: #f5f2ed;
+    --surface: #ffffff;
+    --surface-hover: #f0ebe3;
+    --gold: #9e7c2e;
+    --text-primary: #1a1a1a;
+    --text-secondary: #6b6560;
+    --sanskrit: #8b6914;
+    --border: #d9d3c7;
+    --success: #3a7a4a;
+    --focus: #9e7c2e;
+    --danger: #8c4a4a;
+  }
+}
 
   --font-body: 'Haffer', 'Geist', 'Inter', system-ui, -apple-system, sans-serif;
   --font-sanskrit: 'Tiro Devanagari Sanskrit', 'Noto Sans Devanagari', serif;
@@ -143,10 +176,34 @@ img {
   position: relative;
 }
 
-.font-controls {
+.header-controls {
   position: absolute;
   top: 0;
   right: 0;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.theme-btn {
+  cursor: pointer;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  transition: color var(--transition), border-color var(--transition);
+  letter-spacing: 0.03em;
+}
+
+.theme-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--gold);
+}
+
+.font-controls {
   display: flex;
   gap: 4px;
 }
