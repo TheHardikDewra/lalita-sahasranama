@@ -3,6 +3,7 @@
 Interactive guide to the 1000 sacred names of the Divine Mother Lalita Tripurasundari - built for seekers learning to chant and understand the Lalita Sahasranama Stotra.
 
 **Live site**: [hardikdewra.github.io/lalita-sahasranama](https://hardikdewra.github.io/lalita-sahasranama/)
+**Alternative Link (Vercel):** [lalita-sahasranama.vercel.app](https://lalita-sahasranama.vercel.app)
 
 ## What's inside
 
