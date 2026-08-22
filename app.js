@@ -5,6 +5,11 @@
 (function () {
   'use strict';
 
+  // Tells sync.js a synced key just changed. Harmless when sync.js is absent.
+  function syncNotify(key) {
+    document.dispatchEvent(new CustomEvent('sync:local-change', { detail: { key } }));
+  }
+
   // ---- State ----
   const STATE = {
     learnedNames: new Set(),
@@ -69,7 +74,7 @@
 
   function saveProgress() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify([...STATE.learnedNames]));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([...STATE.learnedNames])); syncNotify(STORAGE_KEY);
     } catch (e) {
       // ignore
     }
@@ -107,7 +112,7 @@
 
   function saveSRS(srsData) {
     try {
-      localStorage.setItem(SRS_KEY, JSON.stringify(srsData));
+      localStorage.setItem(SRS_KEY, JSON.stringify(srsData)); syncNotify(SRS_KEY);
     } catch (e) {
       // ignore
     }
@@ -184,7 +189,7 @@
 
   function saveNotes(notes) {
     try {
-      localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+      localStorage.setItem(NOTES_KEY, JSON.stringify(notes)); syncNotify(NOTES_KEY);
     } catch (e) {
       // ignore
     }
@@ -330,7 +335,7 @@
 
   function saveSadhana(data) {
     try {
-      localStorage.setItem(SADHANA_KEY, JSON.stringify(data));
+      localStorage.setItem(SADHANA_KEY, JSON.stringify(data)); syncNotify(SADHANA_KEY);
     } catch (e) {
       // ignore
     }
@@ -1149,7 +1154,7 @@
 
   function saveChantPos() {
     try {
-      localStorage.setItem(CHANT_POS_KEY, String(STATE.chantVerse));
+      localStorage.setItem(CHANT_POS_KEY, String(STATE.chantVerse)); syncNotify(CHANT_POS_KEY);
     } catch (e) { /* ignore */ }
   }
 
@@ -1482,6 +1487,18 @@
   });
 
   // ---- Init ----
+
+  // Progress arrived from another device - repaint in place, no reload.
+  document.addEventListener('sync:remote-applied', () => {
+    loadProgress();
+    updateHomeStats();
+    if (STATE.currentView === 'home') renderHome();
+    else if (STATE.currentView === 'names') filterAndRenderNames();
+    else if (STATE.currentView === 'verses') renderVerse(STATE.currentVerse);
+    else if (STATE.currentView === 'practice') updateDueCount();
+    // chant view: position is only read on entry, never yanked mid-chant
+  });
+
   function init() {
     initTheme();
     loadProgress();
