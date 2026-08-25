@@ -2401,3 +2401,58 @@ body.auth-modal-open {
 .account-btn[hidden] {
   display: none;
 }
+
+
+/* ========================================
+   Verse line breaks
+
+   dandaBreak() gives each half-verse its own line; these keep those
+   newlines instead of collapsing them back into one running line.
+   ======================================== */
+
+.verse-sanskrit-text,
+.sanskrit-verse,
+.chant-sanskrit,
+.dhyana-deva,
+.phala-shruti-deva {
+  white-space: pre-line;
+}
+
+/* ---- Commentary markdown ---- */
+
+.name-commentary strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.name-commentary em {
+  font-style: italic;
+}
+
+.name-commentary a {
+  color: var(--gold);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.name-commentary a:hover {
+  opacity: 0.82;
+}
+
+/* A heading inside a commentary - its own line, not a wall of bold. */
+.md-head {
+  display: block;
+  margin: var(--space-md) 0 var(--space-xs);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+/* Backticks wrap mantras, not code - so keep the Sanskrit face, and do not
+   let a monospace stack anywhere near the Devanagari. */
+.md-mantra {
+  font-family: var(--font-sanskrit);
+  font-size: 1.05em;
+  color: var(--sanskrit);
+  background: transparent;
+  padding: 0;
+}

@@ -442,7 +442,7 @@
     if (dhyanaContent.children.length === 0) {
       dhyanaContent.innerHTML = DATA.dhyana.map((d, i) => `
         <div class="dhyana-verse">
-          <div class="dhyana-deva">${d.devanagari}</div>
+          <div class="dhyana-deva">${escHtml(dandaBreak(d.devanagari))}</div>
           <div class="dhyana-translit">${escHtml(d.transliteration)}</div>
           <div class="dhyana-meaning">${escHtml(d.meaning)}</div>
         </div>
@@ -619,10 +619,10 @@
         <div class="name-detail-row">
           <div class="name-detail-label">Verse Context</div>
           <div class="name-detail-value">${verseInfo}</div>
-          ${verseSanskrit ? `<div class="name-detail-value sanskrit-verse">${verseSanskrit}</div>` : ''}
+          ${verseSanskrit ? `<div class="name-detail-value sanskrit-verse">${escHtml(dandaBreak(verseSanskrit))}</div>` : ''}
         </div>
         ${displayMantra ? `<div class="name-mantra${hasMantra ? '' : ' simple'}">${escHtml(displayMantra)}</div>` : ''}
-        ${hasCommentary ? `<div class="name-commentary">${escHtml(name.commentary)}</div>` : ''}
+        ${hasCommentary ? `<div class="name-commentary">${renderMarkdown(name.commentary)}</div>` : ''}
         <div class="name-notes">
           <textarea class="note-input" placeholder="Add your personal notes..." data-note="${name.number}">${escHtml(existingNote)}</textarea>
         </div>
@@ -796,7 +796,7 @@
 
     let html = `
       <div class="verse-number-label">Verse ${num}</div>
-      <div class="verse-sanskrit-text">${verse ? verse.sanskrit : ''}</div>
+      <div class="verse-sanskrit-text">${escHtml(dandaBreak(verse ? verse.sanskrit : ''))}</div>
       <div class="verse-names-list">
     `;
 
@@ -1226,7 +1226,7 @@
       document.getElementById('chant-verse-num').textContent = '॥ ' + toDevanagariNum(num) + ' ॥';
 
       // Sanskrit text
-      document.getElementById('chant-sanskrit').textContent = verse ? verse.sanskrit : '';
+      document.getElementById('chant-sanskrit').textContent = dandaBreak(verse ? verse.sanskrit : '');
 
       // Transliteration - combine name transliterations
       var translitEl = document.getElementById('chant-translit');
@@ -1403,6 +1403,78 @@
 
 
   // ---- Utility ----
+
+  /* ---- Verse + commentary formatting ---- */
+
+  // A shloka is written as two half-lines separated by a danda. The source
+  // keeps both on one line, so break after each danda that a new half-verse
+  // actually follows. The lookahead names what may start that next line -
+  // a Devanagari or Latin letter, or an opening bracket - which is what keeps
+  // the three things that trip this up intact: a verse number (॥२४॥) is not
+  // split at its digits, a run of dandas (।।) is not split down the middle,
+  // and a trailing danda before a closing bracket (इति ।) does not strand it
+  // on a line of its own. A danda that opens a line is left where it is.
+  function dandaBreak(text) {
+    if (text == null) return '';
+    return String(text).split('\n').map(function (line) {
+      return line.replace(/(\S[ \t]*[।॥]+)[ \t]*(?=[\u0900-\u0963\u0970-\u097FA-Za-z(\u201c\u2018"])/g, '$1\n');
+    }).join('\n').trim();
+  }
+
+  // The commentaries are written in a light markdown: __bold__, **bold**,
+  // *italic*, `mantra`, [text](url), ### headings and - bullets. Emphasis is
+  // allowed to run across line breaks, so inline formatting is applied to the
+  // whole text before anything line-based. The container keeps the author's
+  // own line breaks (white-space: pre-wrap), so no paragraph tags are added.
+  function renderMarkdown(src) {
+    if (src == null) return '';
+    var slots = [];
+    var A = String.fromCharCode(0);
+    var B = String.fromCharCode(1);
+    function stash(html) {
+      slots.push(html);
+      return A + (slots.length - 1) + B;
+    }
+    function link(url, label) {
+      return stash('<a href="' + url.replace(/"/g, '%22') +
+        '" target="_blank" rel="noopener noreferrer">' + emphasise(label) + '</a>');
+    }
+    // Emphasis. Non-greedy, so an unmatched delimiter leaves the rest of the
+    // text alone instead of swallowing it. The closing delimiter may have
+    // trailing spaces before it, which the source uses a lot (`... || __`).
+    // Runs over link labels too, since those are set aside before the main
+    // pass and would otherwise keep their delimiters as literal text.
+    function emphasise(t) {
+      return t
+        .replace(/__(?=\S)([\s\S]*?\S)[ \t]*__/g, '<strong>$1</strong>')
+        .replace(/\*\*(?=\S)([\s\S]*?\S)[ \t]*\*\*/g, '<strong>$1</strong>')
+        .replace(/(^|[^\w*])\*(?=\S)([^*\n]*?\S)\*(?!\*)/g, '$1<em>$2</em>');
+    }
+
+    var s = escHtml(String(src));
+
+    // Set aside before emphasis runs, so their contents stay literal.
+    s = s.replace(/`([^`\n]+)`/g, function (m, code) {
+      return stash('<code class="md-mantra">' + code + '</code>');
+    });
+    s = s.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, function (m, label, url) {
+      return link(url, label);
+    });
+    s = s.replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g, function (m, before, url) {
+      return before + link(url, url);
+    });
+
+    s = emphasise(s);
+
+    // Line-based bits.
+    s = s.replace(/^[ \t]{0,3}#{1,6}[ \t]+(.+)$/gm, '<strong class="md-head">$1</strong>');
+    s = s.replace(/^[ \t]{0,3}[-*+][ \t]+/gm, '• ');
+
+    return s.replace(new RegExp(A + '(\\d+)' + B, 'g'), function (m, i) {
+      return slots[i];
+    });
+  }
+
   function escHtml(str) {
     const div = document.createElement('div');
     div.textContent = str;
