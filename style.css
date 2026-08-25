@@ -2456,3 +2456,10 @@ body.auth-modal-open {
   background: transparent;
   padding: 0;
 }
+
+/* A divider the writer drew with a row of underscores. */
+.md-rule {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: var(--space-md) 0;
+}

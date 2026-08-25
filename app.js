@@ -1443,16 +1443,49 @@
       return stash('<a href="' + url.replace(/"/g, '%22') +
         '" target="_blank" rel="noopener noreferrer">' + emphasise(label) + '</a>');
     }
-    // Emphasis. Non-greedy, so an unmatched delimiter leaves the rest of the
-    // text alone instead of swallowing it. The closing delimiter may have
-    // trailing spaces before it, which the source uses a lot (`... || __`).
-    // Runs over link labels too, since those are set aside before the main
-    // pass and would otherwise keep their delimiters as literal text.
+    // Emphasis. The commentaries come from many hands and the delimiters are
+    // used loosely - spaces land inside the markers as often as outside
+    // (`__Vidyā- Upāsana mantrās __are__ Vidyā.__`), which strict markdown
+    // rules refuse to pair. So rather than pattern-match, split on the
+    // delimiter and pair the pieces off left to right, which is what the
+    // writer meant. Whitespace at the edges of a span is moved outside the
+    // tag so the sentence keeps its spacing. An odd delimiter orphans only
+    // itself, at the end, instead of swallowing the rest of the entry.
+    function pairWrap(text, delim, tag) {
+      var parts = text.split(delim);
+      if (parts.length < 3) return text;
+      var out = parts[0];
+      var i = 1;
+      for (; i + 1 < parts.length; i += 2) {
+        var inner = parts[i];
+        if (!inner.trim()) {
+          // an empty span is not emphasis - put the markers back untouched
+          out += delim + inner + delim + parts[i + 1];
+          continue;
+        }
+        var lead = inner.match(/^\s*/)[0];
+        var tail = inner.match(/\s*$/)[0];
+        out += lead + '<' + tag + '>' + inner.trim() + '</' + tag + '>' + tail + parts[i + 1];
+      }
+      if (i < parts.length) out += delim + parts[i];
+      return out;
+    }
+
     function emphasise(t) {
-      return t
-        .replace(/__(?=\S)([\s\S]*?\S)[ \t]*__/g, '<strong>$1</strong>')
-        .replace(/\*\*(?=\S)([\s\S]*?\S)[ \t]*\*\*/g, '<strong>$1</strong>')
-        .replace(/(^|[^\w*])\*(?=\S)([^*\n]*?\S)\*(?!\*)/g, '$1<em>$2</em>');
+      // A line of nothing but underscores or asterisks is a divider the
+      // writer drew, not emphasis. Take it out before pairing, or its
+      // markers get read as delimiters.
+      t = t.replace(/^[ \t]*([_*])\1{2,}[ \t]*$/gm, '<hr class="md-rule">');
+      t = pairWrap(t, '__', 'strong');
+      t = pairWrap(t, '**', 'strong');
+      // single asterisks are rare and can be literal, so this one stays
+      // strict: no space after the opener, none before the closer, one line.
+      t = t.replace(/(^|[^\w*])\*(?=\S)([^*\n]*?\S)\*(?!\*)/g, '$1<em>$2</em>');
+      // Anything still standing is an unmatched marker from the original
+      // post - the writer opened emphasis and never closed it. Drop the
+      // marker rather than print it: no word is lost, and a bare __ on the
+      // page is worse than the emphasis simply not happening.
+      return t.replace(/__|\*\*/g, '');
     }
 
     var s = escHtml(String(src));
