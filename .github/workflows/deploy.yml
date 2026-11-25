@@ -1,8 +1,10 @@
 name: Deploy to GitHub Pages
 
+# GitHub Pages is switched off for this repo (the site is served by Vercel at
+# lalita-sahasranama.com), so this job failed on every push. It now runs only
+# when started by hand. To bring Pages back: enable Pages (source: GitHub Actions)
+# and restore the push trigger below.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
