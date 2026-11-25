@@ -1544,7 +1544,10 @@
     EXPECTED_KEYS.forEach(key => {
       const val = localStorage.getItem(key);
       if (val !== null) {
-        data[key] = JSON.parse(val);
+        // Font size and theme are stored as plain words ("normal", "dark"),
+        // not JSON, so keep those as they are instead of failing the export.
+        try { data[key] = JSON.parse(val); }
+        catch (e) { data[key] = val; }
       }
     });
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -1575,7 +1578,9 @@
         }
         EXPECTED_KEYS.forEach(key => {
           if (key in data) {
-            localStorage.setItem(key, JSON.stringify(data[key]));
+            // Plain-word values go back exactly as they were stored.
+            const val = typeof data[key] === 'string' ? data[key] : JSON.stringify(data[key]);
+            localStorage.setItem(key, val);
           }
         });
         window.location.reload();
