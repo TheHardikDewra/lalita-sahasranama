@@ -39,6 +39,8 @@ for the architecture, the merge rules, and the Firebase setup.
 ### Chant
 Full-screen teleprompter mode for daily recitation. Large Devanagari text, auto-advance with configurable speed, fullscreen API, keyboard navigation (arrows, space, F), optional transliteration and meanings overlay. Remembers your position between sessions.
 
+**Chant along with Om Swami ji's video.** One tap opens Om Swami ji's Lalita Sahasranamam from his official YouTube channel inside the Chant view. While it plays, the verse on screen follows the singing; Prev/Next, the dots or tapping a verse take the video to that verse. Nothing loads from YouTube until the video is opened. The verse start times are in `video-sync.js`, read from the verse number shown in the video and checked against the audio.
+
 ### Home
 Stats dashboard, sadhana tracker (log recitations, track streaks), daily name, expandable dhyana verses, phala shruti, audio links, quick navigation.
 

@@ -277,6 +277,19 @@
         <label>Show transliteration: <input type="checkbox" id="chant-show-translit" checked></label>
         <label>Show meanings: <input type="checkbox" id="chant-show-meaning"></label>
       </div>
+      <div class="chant-video" id="chant-video">
+        <button class="chant-btn chant-video-open" id="chant-video-open" type="button" aria-expanded="false" aria-controls="chant-video-panel">Chant along with Om Swami ji's video</button>
+        <div class="chant-video-panel" id="chant-video-panel" hidden>
+          <div class="chant-video-frame"><div id="chant-video-player"></div></div>
+          <div class="chant-video-bar">
+            <button class="chant-btn" id="chant-video-play" type="button">Play from this verse</button>
+            <button class="chant-btn" id="chant-video-follow" type="button" aria-pressed="true">Follow video: On</button>
+            <button class="chant-btn" id="chant-video-close" type="button">Hide video</button>
+          </div>
+          <p class="chant-video-note">The verse below follows the video. Tap a verse to hear it. Sung on <a href="https://www.youtube.com/watch?v=ZcyNgXlAIdQ" target="_blank" rel="noopener">Om Swami ji's YouTube channel</a>.</p>
+          <p class="chant-video-status" id="chant-video-status" hidden></p>
+        </div>
+      </div>
       <div class="chant-stage" id="chant-stage">
         <div class="chant-verse-number" id="chant-verse-num"></div>
         <div class="chant-sanskrit" id="chant-sanskrit"></div>
@@ -341,6 +354,7 @@
   </footer>
 
   <script src="data.js"></script>
+  <script src="video-sync.js"></script>
   <script src="app.js"></script>
   <script src="firebase-config.js"></script>
   <script src="sync.js"></script>

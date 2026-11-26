@@ -280,6 +280,8 @@
       clearInterval(STATE.chantTimer);
       STATE.chantTimer = null;
     }
+    // The video may keep playing elsewhere; only stop moving the verse with it
+    if (view !== 'chant') stopVideoPoll();
     // Remove fullscreen class when leaving chant
     if (view !== 'chant' && STATE.chantFullscreen) {
       STATE.chantFullscreen = false;
@@ -1179,11 +1181,14 @@
     meaningCheck.checked = STATE.chantShowMeaning;
 
     buildChantDots();
-    renderChantVerse(STATE.chantVerse);
+    // If Om Swami ji's video is already playing, pick up where it is.
+    if (videoIsPlaying()) STATE.chantVerse = verseAtVideoTime();
+    renderChantVerse(STATE.chantVerse, 'init');
 
-    if (STATE.chantAuto) {
+    if (STATE.chantAuto && !videoIsPlaying()) {
       startChantTimer();
     }
+    initChantVideo();
   }
 
   function buildChantDots() {
@@ -1197,22 +1202,31 @@
     }
   }
 
-  function updateChantDots() {
+  function updateChantDots(sidewaysOnly) {
     var dots = document.querySelectorAll('.chant-dot');
     dots.forEach(function(d) {
       d.classList.toggle('active', parseInt(d.dataset.verse, 10) === STATE.chantVerse);
     });
     // Scroll active dot into view
     var activeDot = document.querySelector('.chant-dot.active');
-    if (activeDot) {
+    if (activeDot && sidewaysOnly) {
+      // While the video drives the verse, only slide the dot row; never move the page.
+      var row = document.getElementById('chant-dots');
+      row.scrollTo({ left: activeDot.offsetLeft - row.clientWidth / 2, behavior: 'smooth' });
+    } else if (activeDot) {
       activeDot.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
     }
   }
 
-  function renderChantVerse(num) {
+  // origin: undefined = the reader moved (buttons, dots, keys, settings),
+  // 'video' = the playing video moved on, 'init' = opening the chant view.
+  function renderChantVerse(num, origin) {
     num = Math.max(1, Math.min(TOTAL_VERSES, num));
     STATE.chantVerse = num;
-    saveChantPos();
+    // While the video drives the verse, the position is saved when it pauses
+    // or stops, not on every verse (one cloud write per verse adds up).
+    if (origin !== 'video') saveChantPos();
+    if (!origin) videoFollowReader(num);
 
     var verse = DATA.verses[num];
     var names = getNamesByVerse(num);
@@ -1259,7 +1273,7 @@
       document.getElementById('chant-next').disabled = num >= TOTAL_VERSES;
 
       // Update dots
-      updateChantDots();
+      updateChantDots(origin === 'video');
 
       // Fade in
       stage.classList.remove('chant-fade');
@@ -1400,6 +1414,202 @@
       renderChantVerse(parseInt(dot.dataset.verse, 10));
     }
   });
+
+
+  // ---- Chant along with Om Swami ji's video ----
+  // Added 26 Nov 2026. The video opens only when asked, so nothing loads from
+  // YouTube until someone uses it. While it plays, the verse shown here follows
+  // it; moving to another verse (Prev/Next, dots, keys, or tapping the verse)
+  // takes the video there too. Verse start times are in video-sync.js.
+  var VIDEO = window.CHANT_VIDEO || null;
+  var VIDEO_PREF_KEY = 'lsn_chant_video';   // this device only: not synced, not exported
+  var VID = { player: null, ready: false, poll: null, apiAsked: false, follow: true, open: false };
+
+  function loadVideoPref() {
+    try {
+      var p = JSON.parse(localStorage.getItem(VIDEO_PREF_KEY) || '{}');
+      if (typeof p.follow === 'boolean') VID.follow = p.follow;
+      return p.open === true;
+    } catch (e) { return false; }
+  }
+
+  function saveVideoPref() {
+    try { localStorage.setItem(VIDEO_PREF_KEY, JSON.stringify({ open: VID.open, follow: VID.follow })); } catch (e) { /* ignore */ }
+  }
+
+  function videoStart(num) {
+    return (VIDEO && VIDEO.starts[num] != null) ? VIDEO.starts[num] : null;
+  }
+
+  function videoState() {
+    try { return VID.player.getPlayerState(); } catch (e) { return -1; }
+  }
+
+  function videoIsPlaying() {
+    if (!VID.ready) return false;
+    var st = videoState();
+    return st === 1 || st === 3;   // playing or buffering
+  }
+
+  // The last verse whose start the video has reached (verse 1 during the opening dhyana).
+  function verseAtVideoTime() {
+    var t = 0;
+    try { t = VID.player.getCurrentTime() || 0; } catch (e) { /* ignore */ }
+    var v = 1;
+    for (var i = 1; i < VIDEO.starts.length; i++) {
+      if (VIDEO.starts[i] != null && VIDEO.starts[i] <= t + 0.05) v = i;
+    }
+    return v;
+  }
+
+  function setVideoStatus(text) {
+    var el = document.getElementById('chant-video-status');
+    if (el) { el.textContent = text || ''; el.hidden = !text; }
+  }
+
+  // The reader moved to another verse: take the video there too, keeping play or pause.
+  function videoFollowReader(num) {
+    if (!VIDEO || !VID.follow || !VID.ready) return;
+    var st = videoState();
+    if (st !== 1 && st !== 2 && st !== 3) return;   // not started yet: leave it alone
+    var s = videoStart(num);
+    if (s == null || verseAtVideoTime() === num) return;
+    try { VID.player.seekTo(s, true); } catch (e) { /* ignore */ }
+  }
+
+  function playVerseInVideo(num) {
+    var s = videoStart(num);
+    if (s == null) { setVideoStatus('This verse is not sung in the video.'); return; }
+    if (!VID.ready) return;
+    setVideoStatus('');
+    try { VID.player.seekTo(s, true); VID.player.playVideo(); } catch (e) { /* ignore */ }
+  }
+
+  function startVideoPoll() {
+    stopVideoPoll();
+    VID.poll = setInterval(function () {
+      if (STATE.currentView !== 'chant' || !VID.follow || !videoIsPlaying()) return;
+      var v = verseAtVideoTime();
+      if (v !== STATE.chantVerse) renderChantVerse(v, 'video');
+    }, 500);
+  }
+
+  function stopVideoPoll() {
+    if (VID.poll) { clearInterval(VID.poll); VID.poll = null; }
+  }
+
+  function onVideoState(e) {
+    if (e.data === 1) {                              // playing
+      if (VID.follow && STATE.chantTimer) stopChantTimer();   // the video sets the pace
+      startVideoPoll();
+    } else if (e.data === 2 || e.data === 0) {       // paused or ended
+      stopVideoPoll();
+      saveChantPos();
+      if (STATE.chantAuto && STATE.currentView === 'chant' && !STATE.chantTimer) startChantTimer();
+    }
+  }
+
+  function loadYouTubeApi(done) {
+    if (window.YT && window.YT.Player) { done(); return; }
+    var prev = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = function () {
+      if (typeof prev === 'function') { try { prev(); } catch (e) { /* ignore */ } }
+      done();
+    };
+    if (VID.apiAsked) return;
+    VID.apiAsked = true;
+    var s = document.createElement('script');
+    s.src = 'https://www.youtube.com/iframe_api';
+    s.async = true;
+    s.onerror = function () {
+      VID.apiAsked = false;
+      setVideoStatus('The video could not load. Check the internet connection and try again.');
+    };
+    document.head.appendChild(s);
+  }
+
+  function createVideoPlayer() {
+    if (VID.player || !VIDEO) return;
+    loadYouTubeApi(function () {
+      if (VID.player) return;
+      VID.player = new YT.Player('chant-video-player', {
+        host: 'https://www.youtube-nocookie.com',
+        videoId: VIDEO.id,
+        playerVars: { rel: 0, playsinline: 1, start: Math.floor(videoStart(STATE.chantVerse) || 0) },
+        events: {
+          onReady: function () {
+            VID.ready = true;
+            try { VID.player.getIframe().title = VIDEO.title + ' - Om Swami ji'; } catch (e) { /* ignore */ }
+          },
+          onStateChange: onVideoState,
+        },
+      });
+    });
+  }
+
+  function openChantVideo() {
+    var panel = document.getElementById('chant-video-panel');
+    var openBtn = document.getElementById('chant-video-open');
+    if (!panel || !VIDEO) return;
+    VID.open = true;
+    saveVideoPref();
+    panel.hidden = false;
+    openBtn.hidden = true;
+    openBtn.setAttribute('aria-expanded', 'true');
+    document.getElementById('chant-stage').classList.add('chant-seekable');
+    if (!navigator.onLine) { setVideoStatus('The video needs an internet connection.'); return; }
+    setVideoStatus('');
+    createVideoPlayer();
+  }
+
+  function closeChantVideo() {
+    VID.open = false;
+    saveVideoPref();
+    try { if (VID.ready) VID.player.pauseVideo(); } catch (e) { /* ignore */ }
+    stopVideoPoll();
+    document.getElementById('chant-video-panel').hidden = true;
+    var openBtn = document.getElementById('chant-video-open');
+    openBtn.hidden = false;
+    openBtn.setAttribute('aria-expanded', 'false');
+    document.getElementById('chant-stage').classList.remove('chant-seekable');
+  }
+
+  function renderVideoFollow() {
+    var b = document.getElementById('chant-video-follow');
+    if (!b) return;
+    b.textContent = 'Follow video: ' + (VID.follow ? 'On' : 'Off');
+    b.setAttribute('aria-pressed', VID.follow ? 'true' : 'false');
+  }
+
+  function initChantVideo() {
+    var wrap = document.getElementById('chant-video');
+    if (!wrap) return;
+    if (!VIDEO) { wrap.hidden = true; return; }
+    var wasOpen = loadVideoPref();
+    renderVideoFollow();
+    if (!VID.open && wasOpen) openChantVideo();
+    if (videoIsPlaying()) startVideoPoll();
+  }
+
+  (function wireChantVideo() {
+    var openBtn = document.getElementById('chant-video-open');
+    if (!openBtn) return;
+    openBtn.addEventListener('click', openChantVideo);
+    document.getElementById('chant-video-close').addEventListener('click', closeChantVideo);
+    document.getElementById('chant-video-play').addEventListener('click', function () {
+      playVerseInVideo(STATE.chantVerse);
+    });
+    document.getElementById('chant-video-follow').addEventListener('click', function () {
+      VID.follow = !VID.follow;
+      saveVideoPref();
+      renderVideoFollow();
+      if (VID.follow && videoIsPlaying()) renderChantVerse(verseAtVideoTime(), 'video');
+    });
+    // Tap the verse to hear it in the video
+    document.getElementById('chant-stage').addEventListener('click', function () {
+      if (VID.open && VID.ready) playVerseInVideo(STATE.chantVerse);
+    });
+  })();
 
 
   // ---- Utility ----

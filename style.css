@@ -2463,3 +2463,74 @@ body.auth-modal-open {
   border-top: 1px solid var(--border);
   margin: var(--space-md) 0;
 }
+
+/* ========================================
+   Chant along with Om Swami ji's video (26 Nov 2026)
+   ======================================== */
+
+.chant-video {
+  margin-bottom: var(--space-md);
+}
+
+.chant-video[hidden],
+.chant-video-open[hidden],
+.chant-video-panel[hidden],
+.chant-video-status[hidden] {
+  display: none;
+}
+
+.chant-video-open {
+  display: block;
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+}
+
+.chant-video-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+}
+
+.chant-video-frame {
+  position: relative;
+  max-width: 640px;
+  margin: 0 auto;
+  aspect-ratio: 16 / 9;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.chant-video-frame iframe,
+.chant-video-frame #chant-video-player {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.chant-video-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+.chant-video-note,
+.chant-video-status {
+  margin-top: var(--space-sm);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.chant-video-note a {
+  color: var(--gold);
+}
+
+.chant-stage.chant-seekable {
+  cursor: pointer;
+}
