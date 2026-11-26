@@ -1,10 +1,11 @@
-const CACHE_NAME = 'sahasranama-v16';
+const CACHE_NAME = 'sahasranama-v17';
 const CORE_ASSETS = [
   './',
   './index.html',
   './style.css',
   './app.js',
   './data.js',
+  './video-sync.js',
   './firebase-config.js',
   './sync.js',
   './manifest.json',
